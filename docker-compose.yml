@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  database:
+    container_name: ${APP_NAME}_mysql
+    build:
+      context: database
+    environment:
+      - MYSQL_DATABASE=${SQL_DATABASE}
+      - MYSQL_USER=${SQL_USER}
+      - MYSQL_PASSWORD=${SQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${SQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/data:/var/lib/mysql
+
+  php-fpm:
+    container_name: ${APP_NAME}_php-fpm
+    build:
+      context: php-fpm
+    depends_on:
+      - database
+    environment:
+      - DATABASE_URL=${DB_DRIVER}://${SQL_USER}:${SQL_PASSWORD}@database:3306/${SQL_DATABASE}?serverVersion=${MYSQL_VERSION}
+    volumes:
+      - ../:/var/www/html
+
+  nginx:
+    container_name: ${APP_NAME}_nginx
+    build:
+      context: nginx
+    volumes:
+      - ../:/var/www/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites/:/etc/nginx/sites-available
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+      - ./logs:/var/log
+    depends_on:
+      - php-fpm
+    ports:
+      - "80:80"
+      - "443:443"

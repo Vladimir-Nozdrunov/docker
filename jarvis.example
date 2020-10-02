@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+BLUE=$(printf "\033[1;34m")
+WHITE=$(printf "\033[0m")
+GREEN=$(printf "\033[0;32m")
+
+action=$1
+
+if [ "$action" == "" ]; then
+  echo -e "\n"
+  echo -e $GREEN "start" $WHITE "- start Docker environment" "\n"
+  echo -e $GREEN "restart" $WHITE "- restart Docker environment" "\n"
+  echo -e $GREEN "php" $WHITE "- execute PHP command" "\n"
+  echo -e $GREEN "nginx" $WHITE "- browse filesystem" "\n"
+  echo -e $GREEN "mysql" $WHITE "- execute MYSQL command" "\n"
+  echo -e $GREEN "composer" $WHITE "- run composer command" "\n"
+  echo -e $GREEN "migration" $WHITE "- create migration for DB" "\n"
+  echo -e $GREEN "cache" $WHITE "- clear Symfony cache" "\n"
+fi
+
+
+CONTAINER_NGINX="NGINX_CONTAINER_NAME"
+CONTAINER_PHP="PHP_CONTAINER_NAME"
+CONTAINER_MYSQL="MYSQL_CONTAINER_NAME"
+MYSQL_USER="USER_MYSQL_NAME"
+MYSQL_ROOT_PASSWORD="ROOT_PASSWORD_MYSQL"
+
+
+if [ "$action" == "start" ]; then
+  cd docker/ || exit
+  docker-compose up -d --build --remove-orphans;
+  echo -e "\n"
+  echo -e $BLUE "Docker is running" $WHITE "\n"
+
+elif [ "$action" == "restart" ]; then
+  cd docker/ || exit
+  docker-compose stop;
+  docker-compose rm -y;
+  docker-compose up -d --build --remove-orphans;
+  echo -e "\n"
+  echo -e $BLUE "Your environment has been restarted" $WHITE "\n"
+
+elif [ "$action" == "stop" ]; then
+  cd docker/ || exit
+  docker-compose stop;
+  docker-compose rm -y;
+  echo -e "\n"
+  echo -e $BLUE "Your environment is turned off" $WHITE "\n"
+
+elif [ "$action" == "php" ]; then
+  cd docker/ || exit
+  echo -e $BLUE "Type a command you want to be executed" $WHITE "\n"
+  read argument
+  docker exec -it $CONTAINER_PHP php $argument
+
+elif [ "$action" == "nginx" ]; then
+  cd docker/ || exit
+  docker exec -it $CONTAINER_NGINX /bin/sh
+
+elif [ "$action" == "mysql" ]; then
+  cd docker/ || exit
+  echo -e "\n"
+  docker exec -it $CONTAINER_MYSQL mysql -u $MYSQL_USER -p $MYSQL_ROOT_PASSWORD
+
+elif [ "$action" == "composer" ]; then
+  cd docker/ || exit
+  echo -e "\n"
+  echo -e $BLUE "Type a command you want to be executed" $WHITE "\n"
+  read argument
+  docker exec -it $CONTAINER_PHP composer $argument
+
+elif [ "$action" == "update-db" ]; then
+  cd docker/ || exit
+  docker exec -it $CONTAINER_PHP php bin/console doctrine:schema:update -f
+
+elif [ "$action" == "migration" ]; then
+  cd docker/ || exit
+  docker exec -it $CONTAINER_PHP php bin/console doctrine:migration:diff
+
+elif [ "$action" == "cache" ]; then
+  cd docker/ || exit
+  docker exec -it $CONTAINER_PHP php bin/console cache:clear --no-warmup --no-debug
+fi
