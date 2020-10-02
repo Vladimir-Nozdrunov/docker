@@ -57,7 +57,7 @@ NGINX_CONTAINER_NAME="${appname}_nginx"
 MYSQL_CONTAINER_NAME="${appname}_mysql"
 PHP_CONTAINER_NAME="${appname}_php-fpm"
 
-sudo cp .jarvis.example $JARVIS
+sudo cp jarvis.example $JARVIS
 chmod 755 $JARVIS
 
 sed -i "s/NGINX_CONTAINER_NAME/${NGINX_CONTAINER_NAME}/" $JARVIS
